@@ -27,8 +27,8 @@ let reg pp r =
 
 let rec regs pp = function
   | [] -> ()
-  | [r] -> reg pp r
-  | r1::rl -> fprintf pp "%a, %a" reg r1 regs rl
+  | [r] -> fprintf pp "\"%a\"" reg r
+  | r1::rl -> fprintf pp "\"%a\", %a" reg r1 regs rl
 
 let ros pp = function
   | Coq_inl r -> fprintf pp "{\"type\": \"symb\", \"name\": \"%a\"}" reg r
@@ -39,35 +39,35 @@ let print_succ pp s dfl =
   if s <> dfl then fprintf pp "\tgoto %d\n" s
 
 let print_instruction pp (pc, i) =
-  fprintf pp "    %d: " pc;
+  fprintf pp "    \"%d\": " pc;
   match i with
   | Inop s ->
-      fprintf pp "{\"type\": \"Inop\", \"next\": %d}" (P.to_int s)
+      fprintf pp "{\"type\": \"Inop\", \"next\": \"%d\"}" (P.to_int s)
   | Iop(op, args, res, s) ->
-      fprintf pp "{\"type\": \"Iop\", \"dest\": %a, \"operation\": %a, \"next\": %d}"
+      fprintf pp "{\"type\": \"Iop\", \"dest\": \"%a\", \"operation\": %a, \"next\": \"%d\"}"
          reg res (OpToJSON.print_operation reg) (op, args) (P.to_int s)
   | Iload(chunk, addr, args, dst, s) ->
-      fprintf pp "{\"type\": \"Iload\", \"chunk\": %s, \"dest\": %a, \"operation\": %a, \"next\": %d}"
+      fprintf pp "{\"type\": \"Iload\", \"chunk\": \"%s\", \"dest\": \"%a\", \"operation\": %a, \"next\": \"%d\"}"
          (name_of_chunk chunk) reg dst
          (OpToJSON.print_addressing reg) (addr, args) (P.to_int s)
   | Istore(chunk, addr, args, src, s) ->
-      fprintf pp "{\"type\": \"Istore\", \"chunk\": %s, \"source\": %a, \"operation\": %a, \"next\": %d}"
+      fprintf pp "{\"type\": \"Istore\", \"chunk\": \"%s\", \"source\": \"%a\", \"operation\": %a, \"next\": \"%d\"}"
          (name_of_chunk chunk) reg src
          (OpToJSON.print_addressing reg) (addr, args) (P.to_int s)
   | Icall(sg, fn, args, res, s) ->
-      fprintf pp "{\"type\": \"Icall\", \"dest\": %a, \"function\": %a, \"args\": [%a], \"next\": %d}"
+      fprintf pp "{\"type\": \"Icall\", \"dest\": \"%a\", \"function\": %a, \"args\": [%a], \"next\": \"%d\"}"
         reg res ros fn regs args (P.to_int s)
   | Itailcall(sg, fn, args) ->
       fprintf pp "{\"type\": \"Itailcall\", \"function\": %a, \"args\": [%a]}"
         ros fn regs args
   | Ibuiltin(ef, args, res, s) ->
-      fprintf pp "{\"type\": \"Ibuiltin\", \"dest\": \"%a\", \"function\": \"%s\", \"args\": \"%a\", \"next\": %d}"
+      fprintf pp "{\"type\": \"Ibuiltin\", \"dest\": \"%a\", \"function\": \"%s\", \"args\": \"%a\", \"next\": \"%d\"}"
         (print_builtin_res reg) res
         (name_of_external ef)
         (print_builtin_args reg) args
         (P.to_int s)
   | Icond(cond, args, s1, s2) ->
-      fprintf pp "{\"type\": \"Icond\", \"condition\": %a, \"true\": %d, \"false\": %d}"
+      fprintf pp "{\"type\": \"Icond\", \"condition\": %a, \"true\": \"%d\", \"false\": \"%d\"}"
         (OpToJSON.print_condition reg) (cond, args)
         (P.to_int s1) (P.to_int s2)
   | Ijumptable(arg, tbl) ->
@@ -75,9 +75,9 @@ let print_instruction pp (pc, i) =
       fprintf pp "{\"type\": \"Ijumptable\", \"source\": \"%a\", \"table\": {" reg arg;
       for i = 0 to Array.length tbl - 1 do
         if i == Array.length tbl - 1 then
-          fprintf pp "%d: %d" i (P.to_int tbl.(i))
+          fprintf pp "\"%d\": \"%d\"" i (P.to_int tbl.(i))
         else
-          fprintf pp "%d: %d, " i (P.to_int tbl.(i))
+          fprintf pp "\"%d\": \"%d\", " i (P.to_int tbl.(i))
       done;
       fprintf pp "}"
   | Ireturn None ->
@@ -95,7 +95,7 @@ let print_function pp (id, f) =
         (PTree.elements f.fn_code)) in
   let first = ref true in
   List.iter (fun i -> if !first then (first := false; print_instruction pp i) else fprintf pp ",\n%a" print_instruction i) instrs;
-  fprintf pp "\n  }"
+  fprintf pp "\n  }\n}"
 
 let print_globdef first pp (id, gd) =
   match gd with
