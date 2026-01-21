@@ -47,7 +47,7 @@ let compile_c_file sourcename ifile ofile =
   set_dest PrintCsyntax.destination option_dcmedium ".compcert.c";
   set_dest PrintClight.destination option_dclight ".light.c";
   set_dest PrintCminor.destination option_dcminor ".cm";
-  set_dest PrintRTL.destination option_drtl ".rtl";
+  set_dest RTLToJSON.destination option_drtl ".rtl.json";
   set_dest Regalloc.destination_alloctrace option_dalloctrace ".alloctrace";
   set_dest PrintLTL.destination option_dltl ".ltl";
   set_dest PrintMach.destination option_dmach ".mach";
